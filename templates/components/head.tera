@@ -1,0 +1,6 @@
+<head>
+<!-- Production: use bundled assets -->
+  {% set manifest = load_data(path="static/.vite/manifest.json") | json_decode %}
+  {% set entry = manifest["static/index.html"] %}
+  <script type="module" src="/{{ entry.file }}"></script>
+</head>

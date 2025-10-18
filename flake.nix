@@ -12,10 +12,10 @@
         pkgs = import nixpkgs { inherit system; };
 
         # Use the Rust toolchain from nixpkgs (you can pin or override if desired)
-        rustToolchain = pkgs.rustPackages.stable;
+        rustToolchain = pkgs.rustPlatform;
       in {
         packages.default = rustToolchain.buildPackage {
-          pname = "my-crate";
+          pname = "verdanthaven";
           version = "0.1.0";
           src = ./.;
 
@@ -34,13 +34,13 @@
 
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            rustToolchain.rustc
-            rustToolchain.cargo
             pkgs.openssl
             pkgs.pkg-config
+            pkgs.stdenv.cc.cc.lib
           ];
 
           OPENSSL_NO_VENDOR = 1;
-          OPENSSL_DIR = "${pkgs.openssl.out}";
+          LD_LIBRARY_PATH = "${pkgs.openssl.out}/lib:${pkgs.stdenv.cc.cc.lib}/lib";
         };
       });
+}

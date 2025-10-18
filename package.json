@@ -1,0 +1,19 @@
+{
+  "name": "verdant-livekit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "js/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "livekit-client": "^2.15.11"
+  },
+  "devDependencies": {
+    "vite": "^7.1.10"
+  }
+}

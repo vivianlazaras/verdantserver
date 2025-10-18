@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+{# livekit.tera - include shared head and provide a container for LiveKit video #}
+{% include "components/head.tera" %}
+
+<body>
+    <div id="livekit-container" class="livekit-container" style="width:100%;height:100%;min-height:320px;display:flex;align-items:center;justify-content:center;background:#000;">
+        <div id="livekit-view" style="width:100%;height:100%;" aria-label="LiveKit video view"></div>
+        <script type="module">
+        (async () => {
+            const token = {{ access_token | json_encode }};
+            const roomName = {{ room_name | json_encode }};
+            const videoContainer = document.getElementById('livekit-view');
+            if (!videoContainer) {
+                console.error('LiveKit container not found');
+                return;
+            }
+            try {
+                await setupLiveKit(token, roomName, videoContainer);
+            } catch (err) {
+                console.error('setupLiveKit error:', err);
+            }
+        })();
+        </script>
+    </div></div>
+</body>

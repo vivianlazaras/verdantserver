@@ -1,0 +1,78 @@
+{# templates/login.tera #}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login</title>
+    <style>
+        /* Minimal, easily replaceable styles */
+        :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+        body{display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f6f8fa;margin:0}
+        .card{width:100%;max-width:420px;background:#fff;padding:28px;border-radius:8px;box-shadow:0 6px 24px rgba(20,20,30,.08)}
+        h1{margin:0 0 16px;font-size:1.25rem}
+        label{display:block;font-size:.9rem;margin-bottom:8px}
+        input[type="text"],input[type="password"]{width:100%;padding:10px 12px;border:1px solid #d7dbe0;border-radius:6px;font-size:1rem}
+        .row{margin-bottom:12px}
+        .actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+        .btn{background:#0366d6;color:#fff;padding:10px 14px;border:none;border-radius:6px;cursor:pointer}
+        .muted{color:#6b7280;font-size:.9rem}
+        .errors{background:#fff4f4;border:1px solid #ffdddd;color:#7a1f1f;padding:10px;border-radius:6px;margin-bottom:12px}
+        .flash{background:#eefbf4;border:1px solid #d2f3df;color:#0f5132;padding:10px;border-radius:6px;margin-bottom:12px}
+        a{color:#0366d6;text-decoration:none}
+        .foot{margin-top:12px;text-align:center;font-size:.9rem;color:#6b7280}
+    </style>
+</head>
+<body>
+    <main class="card" role="main" aria-labelledby="login-title">
+        <h1 id="login-title">Sign in</h1>
+
+        {# optional flash message (e.g. "logged out") #}
+        {% if flash %}
+            <div class="flash">{{ flash }}</div>
+        {% endif %}
+
+        {# generic errors array (e.g. ["Invalid credentials"]) #}
+        {% if errors %}
+            <div class="errors">
+                <ul style="margin:0;padding-left:1.2em;">
+                    {% for e in errors %}
+                        <li>{{ e }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form action="{{ action | default(value="/login") }}" method="post" novalidate>
+            {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+
+            <div class="row">
+                <label for="username">Username or email</label>
+                <input id="username" name="username" type="text" value="{{ form.username | default(value="") | escape }}" required autocomplete="username" />
+            </div>
+
+            <div class="row">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" required autocomplete="current-password" />
+            </div>
+
+            <div class="row" style="display:flex;align-items:center;justify-content:space-between">
+                <label style="display:flex;align-items:center;gap:8px;font-size:.9rem">
+                    <input name="remember" type="checkbox" {% if form.remember %}checked{% endif %} />
+                    Remember me
+                </label>
+
+                <button type="submit" class="btn">Sign in</button>
+            </div>
+        </form>
+
+        <div class="foot">
+            <a href="{{ forgot_password_url | default(value="/forgot-password") }}">Forgot password?</a>
+            <span style="margin:0 8px;color:#ddd">•</span>
+            <a href="{{ register_url | default(value="/register") }}">Create an account</a>
+        </div>
+    </main>
+</body>
+</html>
