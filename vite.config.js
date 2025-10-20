@@ -14,6 +14,12 @@ export default defineConfig({
     rollupOptions: {
       input: 'js/index.html',    // Entry HTML file
     },
+    lib: {
+      entry: 'js/index.js',
+      name: 'LiveKitSetup',
+      fileName: 'livekit-setup',
+      formats: ['umd', 'es']
+    }
   },
   server: {
     host: '0.0.0.0',          // Allow LAN/devices to access dev server

@@ -47,39 +47,11 @@ impl ConfigLoader {
         let livekit_str = std::fs::read_to_string(&self.livekit_path)?;
         let livekit: LivekitConfig = serde_json::from_str(&livekit_str)?;
 
-        // Read key file bytes
-        let key_bytes = std::fs::read(&self.key_file)?;
+        let (privkey, pubkey) = rocket_oidc::sign::generate_rsa_pkcs8_pair();
+        let encoding_key = EncodingKey::from_rsa_pem(privkey.as_bytes()).expect("invalid private key");
+        let decoding_key = DecodingKey::from_rsa_pem(pubkey.as_bytes()).expect("invalid public key");   
 
-        // Try to build an EncodingKey (private) from common PEM formats
-        let encoding_key = {
-            // try RSA private PEM
-            if let Ok(k) = jsonwebtoken::EncodingKey::from_rsa_pem(&key_bytes) {
-                k
-            } else if let Ok(k) = jsonwebtoken::EncodingKey::from_ec_pem(&key_bytes) {
-                k
-            } else if let Ok(k) = jsonwebtoken::EncodingKey::from_rsa_pem(&key_bytes) {
-                k
-            } else {
-                return Err("failed to parse private key PEM (rsa/ec/pkcs8)".into());
-            }
-        };
-
-        // Try to build a DecodingKey (public) from common PEM formats.
-        // Many libraries accept the private PEM for decoding as well, so reuse the bytes.
-        let decoding_key = {
-            if let Ok(k) = jsonwebtoken::DecodingKey::from_rsa_pem(&key_bytes) {
-                k
-            } else if let Ok(k) = jsonwebtoken::DecodingKey::from_ec_pem(&key_bytes) {
-                k
-            } else if let Ok(k) = jsonwebtoken::DecodingKey::from_rsa_pem(&key_bytes) {
-                k
-            } else {
-                return Err("failed to parse public key PEM (rsa/ec/pkcs8)".into());
-            }
-        };
-
-        let key_str = String::from_utf8(key_bytes.clone())?;
-        let signer = OidcSigner::from_rsa_pem(&key_str, "verdant")?;
+        let signer = OidcSigner::from_rsa_pem(&privkey, "verdant")?;
 
         Ok(VerdantConfig {
             db_path: self.db_path,
@@ -266,7 +238,7 @@ async fn login_handler(
         return Redirect::to("/auth/login");
     }
 
-    let claims = AuthClaims::new(&subject_str, "verdanthaven", &config.issuer_url);
+    let claims = AuthClaims::new(&subject_str, "verdant", &config.issuer_url);
 
     // Sign using the OidcSigner from the config (sign takes (claims, Duration))
     let token = match config

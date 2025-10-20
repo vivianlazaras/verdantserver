@@ -5,7 +5,7 @@ use livekit_api::services::ServiceError;
 use livekit_api::services::room::RoomClient;
 use reqwest::Client;
 use rocket::http::Status;
-use rocket::{Route, State, get, post, response::status, routes, serde::json::Json};
+use rocket::{Route, State, get, post, response::status, routes, serde::json::Json, response::content::RawHtml};
 use rocket_dyn_templates::Template;
 use rocket_oidc::CoreClaims;
 use rocket_oidc::auth::AuthGuard;
@@ -124,7 +124,7 @@ pub async fn list_rooms_route(
 async fn livekit_client(
     guard: Guard,
     cfg: &State<LivekitConfig>,
-) -> Result<Template, status::Custom<String>> {
+) -> Result<RawHtml<Template>, status::Custom<String>> {
     let access_token = get_access_token(&cfg, guard.claims.subject())
         .await
         .map_err(|e| {
@@ -134,11 +134,24 @@ async fn livekit_client(
             )
         })?;
 
+
+    // embed manifest at compile time and parse it, then attach the "index.html" entry to the template context
+    let manifest_str: &str = include_str!("../static/.vite/manifest.json");
+    let manifest: serde_json::Value = serde_json::from_str(manifest_str).map_err(|e| {
+        status::Custom(
+            Status::InternalServerError,
+            format!("Failed to parse static/.vite/manifest.json: {}", e),
+        )
+    })?;
+
     let context = json!({
         "livekit_url": cfg.base_url,
         "access_token": access_token,
+        "entry": manifest["index.html"]["file"].as_str().unwrap_or("static/main.js"),
+        "room_name": guard.claims.subject(),
     });
-    Ok(Template::render("livekit", &context))
+
+    Ok(RawHtml(Template::render("livekit", &context)))
 }
 
 /// Helper to get Rocket routes from this module

@@ -1,4 +1,4 @@
-import { connect, RoomEvent, createLocalVideoTrack } from 'livekit-client';
+import { Room, RoomEvent, createLocalVideoTrack } from 'livekit-client';
 
 // /home/cardinal/projects/security/physical/verdanthaven/js/index.js
 // Requires: npm install livekit-client
@@ -22,13 +22,16 @@ export async function setupLiveKit(token, roomName, videoContainer) {
         '://' +
         location.hostname +
         (location.port ? `:${location.port}` : '');
-    const url = window.LIVEKIT_URL || defaultUrl;
+    const url = "ws://localhost:7800";
 
-    const room = await connect(url, token, {
-        // tweak options as needed
-        autoSubscribe: true,
+    const room = new Room({
         adaptiveStream: true,
+        dynacast: true,
+    // optionally set videoCaptureDefaults, etc.
     });
+
+    await room.connect(url, token);
+    console.log(`Connected to room: ${room.name}`);
 
     // Helper to attach a track (local or remote) into the container.
     const attachTrack = (track) => {
@@ -92,3 +95,5 @@ export async function setupLiveKit(token, roomName, videoContainer) {
         publishLocalVideo,
     };
 }
+
+window.setupLiveKit = setupLiveKit;
