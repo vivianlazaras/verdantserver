@@ -1,3 +1,4 @@
+use crate::backend::Guard;
 use livekit::prelude::{Room, RoomOptions};
 use livekit_api::access_token;
 use livekit_api::services::ServiceError;
@@ -5,15 +6,15 @@ use livekit_api::services::room::RoomClient;
 use reqwest::Client;
 use rocket::http::Status;
 use rocket::{Route, State, get, post, response::status, routes, serde::json::Json};
+use rocket_dyn_templates::Template;
 use rocket_oidc::CoreClaims;
 use rocket_oidc::auth::AuthGuard;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
-use rocket_dyn_templates::Template;
 
 /// Lightweight configuration for communicating with LiveKit
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LivekitConfig {
     pub base_url: String, // e.g. "https://livekit.example.com"
     pub api_key: String,
@@ -31,25 +32,6 @@ pub struct TokenResponse {
 pub struct RoomInfo {
     pub name: String,
     // add other fields you care about from the LiveKit API response
-}
-
-/// Claims structure used to build LiveKit access tokens.
-/// Adjust fields to match your LiveKit server version's expected claims.
-/// Many LiveKit setups expect "iss" = API_KEY and a "grants" object.
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct AccessTokenClaims {
-    sub: String,
-    iss: String,
-    exp: usize,
-    iat: usize,
-    // generic grants object so it's easier to adapt
-    grants: serde_json::Value,
-}
-
-impl rocket_oidc::CoreClaims for AccessTokenClaims {
-    fn subject(&self) -> &str {
-        self.sub.as_ref()
-    }
 }
 
 impl LivekitConfig {
@@ -88,7 +70,10 @@ impl LivekitConfig {
     }
 }
 
-async fn get_access_token(cfg: &LivekitConfig, identity: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn get_access_token(
+    cfg: &LivekitConfig,
+    identity: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let token = access_token::AccessToken::with_api_key(&cfg.api_key, &cfg.api_secret)
         .with_identity(identity)
         .with_name(identity)
@@ -99,8 +84,7 @@ async fn get_access_token(cfg: &LivekitConfig, identity: &str) -> Result<String,
         })
         .to_jwt()?;
 
-    let (room, mut rx) = Room::connect(&cfg.base_url, &token, RoomOptions::default())
-        .await?;
+    let (room, mut rx) = Room::connect(&cfg.base_url, &token, RoomOptions::default()).await?;
 
     Ok(token)
 }
@@ -110,7 +94,7 @@ async fn get_access_token(cfg: &LivekitConfig, identity: &str) -> Result<String,
 /// This route is intentionally not protected (e.g., for application login flow you might protect it).
 #[get("/token")]
 pub async fn token_route(
-    guard: AuthGuard<AccessTokenClaims>,
+    guard: Guard,
     cfg: &State<LivekitConfig>,
 ) -> Result<Json<TokenResponse>, status::Custom<String>> {
     let identity = guard.claims.subject().to_string();
@@ -129,7 +113,7 @@ pub async fn token_route(
 /// Returns a list of rooms from the LiveKit server.
 #[get("/rooms")]
 pub async fn list_rooms_route(
-    guard: AuthGuard<AccessTokenClaims>,
+    guard: Guard,
     cfg: &State<LivekitConfig>,
     client: &State<RoomClient>,
 ) -> Result<Json<Vec<RoomInfo>>, status::Custom<String>> {
@@ -137,10 +121,18 @@ pub async fn list_rooms_route(
 }
 
 #[get("/livekit")]
-async fn livekit_client(guard: AuthGuard<AccessTokenClaims>, cfg: &State<LivekitConfig>) -> Result<Template, status::Custom<String>> {
-    let access_token = get_access_token(&cfg, guard.claims.subject()).await.map_err(|e| {
-        status::Custom(Status::InternalServerError, format!("Failed to get access token: {}", e))
-    })?;
+async fn livekit_client(
+    guard: Guard,
+    cfg: &State<LivekitConfig>,
+) -> Result<Template, status::Custom<String>> {
+    let access_token = get_access_token(&cfg, guard.claims.subject())
+        .await
+        .map_err(|e| {
+            status::Custom(
+                Status::InternalServerError,
+                format!("Failed to get access token: {}", e),
+            )
+        })?;
 
     let context = json!({
         "livekit_url": cfg.base_url,
@@ -151,5 +143,5 @@ async fn livekit_client(guard: AuthGuard<AccessTokenClaims>, cfg: &State<Livekit
 
 /// Helper to get Rocket routes from this module
 pub fn get_routes() -> Vec<Route> {
-    routes![token_route, list_rooms_route]
+    routes![token_route, list_rooms_route, livekit_client]
 }

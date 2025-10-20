@@ -43,7 +43,7 @@
             </div>
         {% endif %}
 
-        <form action="{{ action | default(value="/login") }}" method="post" novalidate>
+        <form action="{{ action | default(value="/auth/login") }}" method="post" novalidate>
             {% if csrf_token %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             {% endif %}
@@ -71,7 +71,7 @@
         <div class="foot">
             <a href="{{ forgot_password_url | default(value="/forgot-password") }}">Forgot password?</a>
             <span style="margin:0 8px;color:#ddd">•</span>
-            <a href="{{ register_url | default(value="/register") }}">Create an account</a>
+            <a href="{{ register_url | default(value="/auth/register") }}">Create an account</a>
         </div>
     </main>
 </body>

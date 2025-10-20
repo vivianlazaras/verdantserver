@@ -1,0 +1,6 @@
+{
+  "db_path":"postgresql://verdant:verdanthaven64@localhost/verdant",
+  "key_file":"./config/verdant.pem",
+  "issuer_url":"http://localhost:8080",
+  "livekit_path":"./config/livekit.json"
+}
