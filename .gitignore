@@ -1,0 +1,7 @@
+/target
+/node_modules
+/static/*.js*
+/config
+/static/*.mjs*
+/static/assets
+/sessions

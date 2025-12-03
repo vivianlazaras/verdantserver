@@ -1,0 +1,36 @@
+[package]
+name = "verdanthaven"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bcrypt = "0.17.1"
+jsonwebtoken = { version = "10.0.0", features = ["rust_crypto"] }
+livekit = "0.7.21"
+livekit-api = "0.4.8"
+ormlite = { version = "0.24.1", features = ["postgres", "uuid"] }
+reqwest = "0.12.24"
+rocket = { version = "0.5.1", features = ["json"] }
+rocket-oidc = { git = "https://github.com/vivianlazaras/rocket-oidc" }
+rocket_dyn_templates = { version = "0.2.0", features = ["tera"] }
+serde = "1.0.228"
+serde_derive = "1.0.228"
+serde_json = "1.0.145"
+structopt = "0.3.26"
+uuid = { version = "1.18.1", features = ["v4", "serde"] }
+verdant = { path = "../protocol" }
+base64 = "0.22.1"
+thiserror = "2.0.17"
+opaque-ke = "4.0.0"
+rsa = "0.9.8"
+keycast = "0.1.6"
+mdns-sd = "0.15.1"
+tokio = "1.48.0"
+spki = "0.7.3"
+rand = "0.8"
+qrcode = "0.14.1"
+time = "0.3.44"
+chrono = "0.4.42"
+hound = "3.5.1"
+futures = "0.3.31"
+mediawire = { path = "../mediawire", features = ["livekit"]}
